@@ -1,0 +1,13 @@
+# Mission Computer 출력 항목 설정
+# 출력하려면 true, 숨기려면 false 로 설정합니다.
+
+# --- get_mission_computer_info ---
+os_system=true
+os_version=true
+cpu_type=true
+cpu_cores=true
+memory_size=true
+
+# --- get_mission_computer_load ---
+cpu_usage=true
+memory_usage=true

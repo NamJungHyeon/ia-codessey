@@ -1,85 +1,139 @@
-# Mars Mission Computer - DummySensor
+# Mars Mission Computer
 
-## 개요
-
-화성 기지 미션 컴퓨터의 환경 센서 시뮬레이션 모듈입니다.
-실제 센서를 구현하기 전 테스트 목적으로 랜덤 값을 생성하는 **더미 센서(Dummy Sensor)** 클래스를 구현합니다.
+화성 기지의 미션 컴퓨터 상태를 모니터링하는 Python 프로그램입니다.
 
 ---
 
 ## 파일 구조
 
 ```
-3nd/
-├── mars_mission_computer.py   # 메인 소스 파일
-├── sensor_log.log             # 센서 데이터 로그 파일 (실행 시 자동 생성)
-└── README.md                  # 프로젝트 설명 문서
+5nd/
+├── mars_mission_computer.py  # 메인 소스 코드
+├── setting.txt               # 출력 항목 설정 파일 (선택)
+└── README.md
 ```
 
 ---
 
-## 실행 환경
+## 사용 라이브러리
 
-- Python 3.x
-- 외부 라이브러리 불필요 (Python 기본 내장 모듈만 사용)
-  - `random` : 랜덤 값 생성
-  - `datetime` : 타임스탬프 기록
+| 라이브러리 | 종류 | 용도 |
+|---|---|---|
+| `json` | 표준 | 결과를 JSON 형식으로 출력 |
+| `os` | 표준 | CPU 코어 수 조회 |
+| `platform` | 표준 | OS 및 CPU 정보 조회 |
+| `random` | 표준 | 센서 더미 데이터 생성 |
+| `sys` | 표준 | 표준 입력 감지 (종료 처리) |
+| `threading` | 표준 | 종료 대기 스레드 실행 |
+| `time` | 표준 | 주기적 센서 데이터 수집 |
+| `psutil` | 외부 | 메모리 크기, CPU/메모리 실시간 사용량 조회 |
 
----
-
-## 클래스 설명
-
-### `DummySensor`
-
-테스트용 더미 센서 클래스로, 화성 기지의 환경 데이터를 랜덤으로 생성합니다.
-
-#### 멤버 변수
-
-| 변수명 | 타입 | 설명 |
-|--------|------|------|
-| `env_values` | `dict` | 화성 기지 환경 데이터를 저장하는 사전 객체 |
-
-#### `env_values` 항목 및 범위
-
-| 키 | 설명 | 범위 | 단위 |
-|----|------|------|------|
-| `mars_base_internal_temperature` | 화성 기지 내부 온도 | 18 ~ 30 | °C |
-| `mars_base_external_temperature` | 화성 기지 외부 온도 | 0 ~ 21 | °C |
-| `mars_base_internal_humidity` | 화성 기지 내부 습도 | 50 ~ 60 | % |
-| `mars_base_external_illuminance` | 화성 기지 외부 광량 | 500 ~ 715 | W/m² |
-| `mars_base_internal_co2` | 화성 기지 내부 이산화탄소 농도 | 0.02 ~ 0.1 | % |
-| `mars_base_internal_oxygen` | 화성 기지 내부 산소 농도 | 4 ~ 7 | % |
+> `psutil`은 설치 안 된 경우에도 예외 처리로 안전하게 동작합니다.
 
 ---
 
-#### 메소드
+## 클래스 및 함수 설명
 
-### `set_env()`
+### `_load_settings()` (모듈 레벨 함수)
 
-`random.uniform()`을 사용하여 각 항목의 지정된 범위 안에서 랜덤 값을 생성하고 `env_values`에 저장합니다.
+`setting.txt` 파일을 읽어 출력할 항목을 설정합니다.
 
-```python
-ds.set_env()
-```
-
-### `get_env()`
-
-`env_values`를 반환합니다.
-호출 시 현재 시각과 함께 센서 데이터를 `sensor_log.log` 파일에 자동으로 기록합니다. (보너스 과제)
-
-```python
-env = ds.get_env()
-```
-
-#### 로그 파일 형식 (`sensor_log.log`)
+- 파일이 없으면 모든 항목을 기본값(`True`)으로 사용합니다.
+- `key = value` 형식으로 항목별 출력 여부를 지정합니다.
 
 ```
-날짜/시간, 내부온도, 외부온도, 내부습도, 외부광량, CO2농도, 산소농도
+# setting.txt 예시
+os_system = true
+os_version = false
+cpu_type = true
+cpu_cores = true
+memory_size = true
+cpu_usage = true
+memory_usage = false
 ```
 
-예시:
+---
+
+### `DummySensor` 클래스
+
+실제 센서 대신 랜덤 값을 생성하는 가상 센서입니다.
+
+| 메서드 | 설명 |
+|---|---|
+| `set_env(env)` | 측정할 센서 타입 지정 |
+| `get_env()` | 지정된 센서의 랜덤 값 반환 |
+
+**센서 항목 및 범위**
+
+| 항목 | 범위 |
+|---|---|
+| 기지 내부 온도 | 18.0 ~ 30.0 °C |
+| 기지 외부 온도 | -80.0 ~ 20.0 °C |
+| 기지 내부 습도 | 30.0 ~ 70.0 % |
+| 외부 조도 | 0.0 ~ 1000.0 |
+| 내부 CO2 농도 | 0.02 ~ 0.1 |
+| 내부 산소 농도 | 4.0 ~ 7.0 |
+
+---
+
+### `MissionComputer` 클래스
+
+미션 컴퓨터의 핵심 클래스입니다.
+
+#### `get_mission_computer_info()`
+
+미션 컴퓨터의 시스템 정보를 JSON으로 출력합니다.
+
+```json
+{
+    "os_system": "Darwin",
+    "os_version": "Darwin Kernel Version 25.3.0: ...",
+    "cpu_type": "arm",
+    "cpu_cores": 10,
+    "memory_size": "16.0 GB"
+}
 ```
-2026-03-29 15:54:00, 26.08, 13.84, 52.26, 559.23, 0.0519, 4.74
+
+#### `get_mission_computer_load()`
+
+CPU와 메모리의 실시간 사용량을 JSON으로 출력합니다.
+(`cpu_percent(interval=1)` 호출로 약 1초 대기 후 출력)
+
+```json
+{
+    "cpu_usage": "12.5 %",
+    "memory_usage": "68.3 %"
+}
+```
+
+#### `get_sensor_data()`
+
+5초마다 센서 데이터를 수집하여 JSON으로 출력합니다.
+5분마다 수집된 데이터의 평균값을 별도로 출력합니다.
+
+```json
+{
+    "mars_base_internal_temperature": 24.73,
+    "mars_base_external_temperature": -42.18,
+    "mars_base_internal_humidity": 55.61,
+    "mars_base_external_illuminance": 312.44,
+    "mars_base_internal_co2": 0.07,
+    "mars_base_internal_oxygen": 5.83
+}
+```
+
+**종료 방법:** Enter 키 입력 또는 `Ctrl+C`
+
+#### `_print_five_min_avg()`
+
+최근 5분간 수집된 센서 데이터의 평균값을 출력하는 내부 메서드입니다.
+
+```
+[5-minute average]
+{
+    "mars_base_internal_temperature": 25.1234,
+    ...
+}
 ```
 
 ---
@@ -90,24 +144,20 @@ env = ds.get_env()
 python3 mars_mission_computer.py
 ```
 
-## 출력 예시
+## 실행 흐름
 
 ```
-----------------------------------------------
-  화성 기지 내부 온도   : 26.08 °C
-  화성 기지 외부 온도   : 13.84 °C
-  화성 기지 내부 습도   : 52.26 %
-  화성 기지 외부 광량   : 559.23 W/m²
-  화성 기지 내부 CO2   : 0.0519 %
-  화성 기지 내부 산소   : 4.74 %
-----------------------------------------------
+실행
+ │
+ ├─ get_mission_computer_info()  →  시스템 정보 JSON 1회 출력
+ │
+ ├─ get_mission_computer_load()  →  CPU/메모리 사용량 JSON 1회 출력 (~1초 소요)
+ │
+ └─ get_sensor_data() 루프 시작
+       │
+       ├─ [5초마다] 센서 데이터 JSON 출력
+       │
+       ├─ [5분마다] 5분 평균 JSON 출력
+       │
+       └─ [Enter 또는 Ctrl+C] → "System stoped...." 출력 후 종료
 ```
-
----
-
-## 코드 스타일
-
-- **PEP 8** 파이썬 공식 코드 스타일 가이드 준수
-- 문자열은 작은따옴표(`' '`) 기본 사용
-- 들여쓰기는 공백(space) 4칸 사용
-- 대입문 `=` 앞뒤 공백 적용
